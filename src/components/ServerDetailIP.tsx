@@ -5,7 +5,7 @@ import { useWebSocketContext } from "@/hooks/use-websocket-context"
 import { fetchLoginUser } from "@/lib/nezha-api"
 import { cn, formatNezhaInfo } from "@/lib/utils"
 import { NezhaServer, NezhaWebsocketResponse } from "@/types/nezha-api"
-import { Copy, Globe2, Play, RefreshCw, ShieldCheck } from "lucide-react"
+import { Play, RefreshCw, ShieldCheck } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 
@@ -66,17 +66,19 @@ type UnlockFamily = "4" | "6"
 type UnlockCatalogItem = {
   key: string
   label: string
+  icon: string
+  bgColor: string
 }
 
 const UNLOCK_CATALOG: UnlockCatalogItem[] = [
-  { key: "netflix", label: "Netflix" },
-  { key: "disney", label: "Disney+" },
-  { key: "youtube", label: "YouTube Premium" },
-  { key: "spotify", label: "Spotify" },
-  { key: "tiktok", label: "TikTok" },
-  { key: "chatgpt", label: "ChatGPT" },
-  { key: "claude", label: "Claude" },
-  { key: "gemini", label: "Gemini" },
+  { key: "netflix", label: "Netflix", icon: "netflix.svg", bgColor: "#E50914" },
+  { key: "disney", label: "Disney+", icon: "disneyplus.svg", bgColor: "#113CCF" },
+  { key: "youtube", label: "YouTube Premium", icon: "youtube.svg", bgColor: "#FF0033" },
+  { key: "spotify", label: "Spotify", icon: "spotify.svg", bgColor: "#1DB954" },
+  { key: "tiktok", label: "TikTok", icon: "tiktok.svg", bgColor: "#111827" },
+  { key: "chatgpt", label: "ChatGPT", icon: "openai.svg", bgColor: "#10A37F" },
+  { key: "claude", label: "Claude", icon: "anthropic.svg", bgColor: "#CC785C" },
+  { key: "gemini", label: "Gemini", icon: "googlegemini.svg", bgColor: "#6B67FA" },
 ]
 
 function readThemeString(key: string, fallback: string) {
@@ -112,10 +114,18 @@ function scoreTone(score?: number) {
 
 function statusTone(status?: string) {
   const normalized = (status || "").toLowerCase()
-  if (["ok", "success", "unlocked", "available", "yes"].includes(normalized))
-    return "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
-  if (["blocked", "failed", "no", "error"].includes(normalized)) return "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300"
+  if (["ok", "success", "unlocked", "available", "yes"].includes(normalized)) return "ds-unlock-badge-ok"
+  if (["blocked", "fail", "no", "error"].includes(normalized)) return "ds-unlock-badge-fail"
+  if (["partial"].includes(normalized)) return "ds-unlock-badge-partial"
+  if (["pending", "wait", "waiting"].includes(normalized)) return "ds-unlock-badge-pending"
   return "bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-300"
+}
+
+function statusText(status?: string, statusText?: string, t: (key: string) => string = (k) => k) {
+  const normalized = (status || "").toLowerCase()
+  if (["blocked"].includes(normalized)) return t("serverIp.unavailable")
+  if (["pending", "wait", "waiting"].includes(normalized)) return t("serverIp.pending")
+  return statusText || status || t("serverIp.noRecord")
 }
 
 function InfoRow({ label, value }: { label: string; value?: string | number | boolean | null }) {
@@ -125,31 +135,6 @@ function InfoRow({ label, value }: { label: string; value?: string | number | bo
       <span className="shrink-0 text-muted-foreground">{label}</span>
       <span className="break-all text-right font-medium">{String(value)}</span>
     </div>
-  )
-}
-
-function IpAddressCard({ label, value, onCopy }: { label: string; value?: string; onCopy: (value: string) => void }) {
-  return (
-    <Card className="rounded-xl bg-white/70 dark:bg-stone-900/70">
-      <CardHeader className="p-4 pb-2">
-        <CardTitle className="flex items-center gap-2 text-sm">
-          <Globe2 className="size-4" />
-          {label}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-4 pt-0">
-        {value ? (
-          <div className="flex items-center justify-between gap-2">
-            <code className="break-all rounded-md bg-stone-100 px-2 py-1 text-sm dark:bg-stone-800">{value}</code>
-            <Button variant="ghost" size="icon" onClick={() => onCopy(value)} aria-label="copy">
-              <Copy className="size-4" />
-            </Button>
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">--</p>
-        )}
-      </CardContent>
-    </Card>
   )
 }
 
@@ -194,8 +179,6 @@ function IpMetaCard({ record }: { record: IpMetaRecord }) {
 function UnlockCards({ data, loading }: { data: UnlockApiResponse | null; loading: boolean }) {
   const { t } = useTranslation()
   const resultMap = new Map((data?.results || []).map((item) => [item.key, item]))
-  const knownKeys = new Set(UNLOCK_CATALOG.map((item) => item.key))
-  const unknownResults = (data?.results || []).filter((item) => !knownKeys.has(item.key))
 
   if (loading) return <p className="text-sm text-muted-foreground">{t("serverIp.loading")}</p>
 
@@ -206,33 +189,39 @@ function UnlockCards({ data, loading }: { data: UnlockApiResponse | null; loadin
           {t("serverIp.updatedAt")}: {formatDateTime(data.updatedAt)}
         </p>
       )}
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {UNLOCK_CATALOG.map((catalog) => {
           const item = resultMap.get(catalog.key)
           return (
-            <div key={catalog.key} className="rounded-lg border bg-stone-50/80 p-3 dark:bg-stone-900/60">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-medium">{catalog.label}</span>
-                <Badge className={cn("border-0", statusTone(item?.status))}>{item?.statusText || item?.status || t("serverIp.noRecord")}</Badge>
+            <div
+              key={catalog.key}
+              className="group relative overflow-hidden rounded-xl border border-stone-200/50 bg-white/80 transition-all duration-200 hover:scale-[1.02] hover:border-stone-300/70 hover:shadow-lg active:scale-[0.98] dark:border-stone-700/50 dark:bg-stone-900/80 dark:hover:border-stone-600/70"
+              style={{ boxShadow: "0 10px 26px #0f172a0f", willChange: "transform" }}
+            >
+              <div className="p-3">
+                <div className="flex items-center gap-2.5">
+                  {/* 图标 */}
+                  <div className="flex size-9 items-center justify-center rounded-lg" style={{ backgroundColor: catalog.bgColor }}>
+                    <img src={`/unlock-icons/${catalog.icon}`} alt={catalog.label} className="size-5 object-contain brightness-0 invert" />
+                  </div>
+                  {/* 标签 */}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-stone-800 dark:text-stone-100">{catalog.label}</p>
+                    <p className="mt-0.5 truncate text-xs text-stone-500 dark:text-stone-400">
+                      {[item?.region, item?.typeText || item?.type].filter(Boolean).join(" · ") || "--"}
+                    </p>
+                  </div>
+                </div>
+                {/* 状态徽章 */}
+                <div className="mt-2.5">
+                  <Badge className={cn("border-0 text-xs", statusTone(item?.status))}>{statusText(item?.status, item?.statusText, t)}</Badge>
+                </div>
+                {item?.detail && <p className="mt-1.5 break-all text-xs text-stone-400 dark:text-stone-500">{item.detail}</p>}
               </div>
-              <p className="mt-2 text-xs text-muted-foreground">{[item?.region, item?.typeText || item?.type].filter(Boolean).join(" · ") || "--"}</p>
-              {item?.detail && <p className="mt-1 break-all text-xs text-muted-foreground">{item.detail}</p>}
             </div>
           )
         })}
       </div>
-      {unknownResults.length > 0 && (
-        <div className="rounded-lg border border-dashed p-3">
-          <p className="mb-2 text-sm font-medium">{t("serverIp.otherUnlockResults")}</p>
-          <div className="flex flex-wrap gap-2">
-            {unknownResults.map((item) => (
-              <Badge key={item.key} variant="outline">
-                {item.name || item.key}: {item.statusText || item.status || "--"}
-              </Badge>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   )
 }
@@ -312,7 +301,7 @@ function UnlockFamilyPanel({
             {t("serverIp.refresh")}
           </Button>
           <Button size="sm" onClick={runCheck} disabled={loading || running || !enabled || !online}>
-            <Play className="size-4" />
+            {running ? <RefreshCw className="size-4 animate-spin" /> : <Play className="size-4" />}
             {running ? t("serverIp.running") : t("serverIp.runCheck")}
           </Button>
         </div>
@@ -332,7 +321,6 @@ export default function ServerDetailIP({ server_id }: { server_id: string }) {
   const [isAdmin, setIsAdmin] = useState(false)
   const [checkingLogin, setCheckingLogin] = useState(true)
   const [loginChecked, setLoginChecked] = useState(false)
-  const [copied, setCopied] = useState("")
   const [metaRecords, setMetaRecords] = useState<IpMetaRecord[]>([])
   const [metaLoading, setMetaLoading] = useState(false)
   const [metaError, setMetaError] = useState("")
@@ -403,13 +391,6 @@ export default function ServerDetailIP({ server_id }: { server_id: string }) {
     return () => controller.abort()
   }, [ipMetaBase, isAdmin, loginChecked, ips.join(","), t])
 
-  const copyText = (value: string) => {
-    navigator.clipboard?.writeText(value).then(() => {
-      setCopied(value)
-      window.setTimeout(() => setCopied(""), 1500)
-    })
-  }
-
   if (checkingLogin) {
     return (
       <Card className="rounded-xl">
@@ -439,15 +420,6 @@ export default function ServerDetailIP({ server_id }: { server_id: string }) {
 
   return (
     <section className="space-y-4">
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        <IpAddressCard label="IPv4" value={server.ipv4} onCopy={copyText} />
-        <IpAddressCard label="IPv6" value={server.ipv6} onCopy={copyText} />
-      </div>
-      {copied && (
-        <p className="text-sm text-emerald-600 dark:text-emerald-300">
-          {t("serverIp.copied")}: {copied}
-        </p>
-      )}
       {ips.length === 0 && (
         <Card className="rounded-xl">
           <CardContent className="p-6 text-sm text-muted-foreground">{t("serverIp.noIp")}</CardContent>
@@ -456,11 +428,11 @@ export default function ServerDetailIP({ server_id }: { server_id: string }) {
       {ips.length > 0 && (
         <Card className="rounded-xl bg-white/60 dark:bg-stone-900/60">
           <CardHeader className="p-4 pb-2">
-            <CardTitle className="text-base">{t("serverIp.metaTitle")}</CardTitle>
+            <CardTitle className="text-base">{t("serverIp.qualityTitle")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 p-4 pt-2">
             {metaLoading && <p className="text-sm text-muted-foreground">{t("serverIp.loading")}</p>}
-            {metaError && <p className="text-sm text-red-500">{metaError}</p>}
+            {metaError && <p className="text-sm text-stone-500 dark:text-stone-400">{t("serverIp.metaError")}</p>}
             {!metaLoading && metaRecords.length === 0 && !metaError && <p className="text-sm text-muted-foreground">{t("serverIp.noMeta")}</p>}
             {metaRecords.map((record) => (
               <IpMetaCard key={`${record.family || "ip"}-${record.ip}`} record={record} />

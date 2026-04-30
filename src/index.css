@@ -232,3 +232,24 @@
 .scrollbar-hidden::-webkit-scrollbar {
   display: none; /* Chrome, Safari 和 Opera */
 }
+
+/* 解锁状态徽章样式 */
+.ds-unlock-badge-ok {
+  color: #059669 !important;
+  background: #10b9811f !important;
+}
+
+.ds-unlock-badge-fail {
+  color: #dc2626 !important;
+  background: #ef44441f !important;
+}
+
+.ds-unlock-badge-partial {
+  color: #d97706 !important;
+  background: #f59e0b1f !important;
+}
+
+.ds-unlock-badge-pending {
+  color: #64748b !important;
+  background: #94a3b824 !important;
+}

@@ -1,9 +1,9 @@
-import react from "@vitejs/plugin-react-swc"
-import { execSync } from "child_process"
-import path from "path"
-import { UserConfig, defineConfig } from "vite"
+import react from "@vitejs/plugin-react-swc";
+import { execSync } from "child_process";
 import dotenv from "dotenv";
 import * as fs from "fs";
+import path from "path";
+import { UserConfig, defineConfig } from "vite";
 
 
 // Get git commit hash
@@ -68,6 +68,10 @@ export default defineConfig(({ mode }) => {
           rewriteWsOrigin: true,
         },
         "/favicon.ico": {
+          target: process.env.VITE_API_TARGET,
+          changeOrigin: true,
+        },
+        "/unlock-probe": {
           target: process.env.VITE_API_TARGET,
           changeOrigin: true,
         },
