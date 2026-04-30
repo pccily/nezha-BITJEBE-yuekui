@@ -108,7 +108,7 @@ export function ServiceTracker({ serverList }: { serverList: NezhaServer[] }) {
   }
 
   const allServices = serviceData.data.services ? Object.entries(serviceData.data.services) : []
-  const visibleServices = allServices.filter(([_, data]) => !hiddenServices.includes(data.service_name))
+  const visibleServices = allServices.filter(([, data]) => !hiddenServices.includes(data.service_name))
 
   return (
     <div className="mt-4 w-full mx-auto ">
@@ -133,10 +133,7 @@ export function ServiceTracker({ serverList }: { serverList: NezhaServer[] }) {
                   <div className="space-y-2">
                     {allServices.map(([id, data]) => (
                       <label key={id} className="flex items-center gap-2 cursor-pointer text-sm">
-                        <Checkbox
-                          checked={!hiddenServices.includes(data.service_name)}
-                          onCheckedChange={() => toggleService(data.service_name)}
-                        />
+                        <Checkbox checked={!hiddenServices.includes(data.service_name)} onCheckedChange={() => toggleService(data.service_name)} />
                         {data.service_name}
                       </label>
                     ))}
@@ -149,7 +146,9 @@ export function ServiceTracker({ serverList }: { serverList: NezhaServer[] }) {
             <section className="grid grid-cols-1 md:grid-cols-2 mt-2 gap-2 md:gap-4">
               {visibleServices.map(([name, data]) => {
                 const { days, uptime, avgDelay, totalDays } = processServiceData(data)
-                return <ServiceTrackerClient key={name} days={days} title={data.service_name} uptime={uptime} avgDelay={avgDelay} totalDays={totalDays} />
+                return (
+                  <ServiceTrackerClient key={name} days={days} title={data.service_name} uptime={uptime} avgDelay={avgDelay} totalDays={totalDays} />
+                )
               })}
             </section>
           )}

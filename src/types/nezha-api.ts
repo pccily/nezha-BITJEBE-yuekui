@@ -18,6 +18,9 @@ export interface NezhaServer {
   expired_at?: string
   // Komari 后端权威 online 字段(基于 WS 连接 + presence TTL),优先于 last_active 时间差
   online?: boolean
+  // Komari 后端节点 IP 字段透传,仅允许在管理员登录确认后展示
+  ipv4?: string
+  ipv6?: string
   // Komari 后端 tags 字段透传,用于让消费者(如资产卡片)读取 <JPY> 等内嵌元标签
   tags?: string
   // Komari 后端 currency 字段透传,作为最后的兜底
@@ -161,6 +164,11 @@ type SettingConfig = {
   user_template: string
   admin_template: string
   custom_code: string
+  ShowServerIpInfo: boolean
+  ShowStreamUnlock: boolean
+  IpMetaApiBase: string
+  UnlockProbeApiBase: string
+  StreamUnlockShowIPv6: boolean
 }
 
 export interface SettingResponse {

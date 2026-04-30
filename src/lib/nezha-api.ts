@@ -1,5 +1,5 @@
 import { SharedClient } from "@/hooks/use-rpc2"
-import { LoginUserResponse, MonitorResponse, ServerGroupResponse, ServiceData, ServiceResponse, SettingResponse, NezhaMonitor } from "@/types/nezha-api"
+import { LoginUserResponse, MonitorResponse, NezhaMonitor, ServerGroupResponse, ServiceData, ServiceResponse, SettingResponse } from "@/types/nezha-api"
 import { DateTime } from "luxon"
 
 import { getKomariNodes, uuidToNumber } from "./utils"
@@ -13,8 +13,8 @@ export const fetchServerGroup = async (): Promise<ServerGroupResponse> => {
     throw new Error(kmNodes.error)
   }
   // extract groups
-  let groups: string[] = []
-  Object.entries(kmNodes).forEach(([_, value]) => {
+  const groups: string[] = []
+  Object.entries(kmNodes).forEach(([, value]) => {
     if (value.group && !groups.includes(value.group)) {
       groups.push(value.group)
     }
@@ -31,8 +31,8 @@ export const fetchServerGroup = async (): Promise<ServerGroupResponse> => {
           name: group,
         },
         servers: Object.entries(kmNodes)
-          .filter(([_, value]) => value.group === group)
-          .map(([key, _]) => uuidToNumber(key)),
+          .filter(([, value]) => value.group === group)
+          .map(([key]) => uuidToNumber(key)),
       })),
     ],
   }
@@ -305,7 +305,7 @@ export const fetchService = async (): Promise<ServiceResponse> => {
   const kmNodes: Record<string, any> = await getKomariNodes()
   const uuids = Object.keys(kmNodes || {})
 
-  let allTasks: any[] = []
+  const allTasks: any[] = []
   let allRecords: any[] = []
   const seenTaskIds = new Set<number>()
 
@@ -406,12 +406,18 @@ export const fetchSetting = async (): Promise<SettingResponse> => {
     throw new Error(km_public.error)
   }
   // Apply managed theme configuration to window.* variables
-  const themeSettings = km_public.theme_settings
-  if (themeSettings && typeof themeSettings === "object") {
-    ;(window as unknown as Record<string, unknown>).__themeSettings = { ...themeSettings }
-    for (const [key, value] of Object.entries(themeSettings)) {
-      ;(window as unknown as Record<string, unknown>)[key] = value
-    }
+  const defaultThemeSettings: Record<string, unknown> = {
+    ShowServerIpInfo: true,
+    ShowStreamUnlock: true,
+    IpMetaApiBase: "/ip-meta",
+    UnlockProbeApiBase: "/unlock-probe",
+    StreamUnlockShowIPv6: true,
+  }
+  const themeSettings = km_public.theme_settings && typeof km_public.theme_settings === "object" ? km_public.theme_settings : {}
+  const mergedThemeSettings = { ...defaultThemeSettings, ...themeSettings }
+    ; (window as unknown as Record<string, unknown>).__themeSettings = { ...mergedThemeSettings }
+  for (const [key, value] of Object.entries(mergedThemeSettings)) {
+    ; (window as unknown as Record<string, unknown>)[key] = value
   }
   const km_version = await SharedClient().call("common:getVersion")
   const km_data: SettingResponse = {
@@ -425,6 +431,11 @@ export const fetchSetting = async (): Promise<SettingResponse> => {
         user_template: "",
         admin_template: "",
         custom_code: "", // km_public.custom_head 当作为主题时，Komari会自动在Head中插入该代码，留空即可
+        ShowServerIpInfo: mergedThemeSettings.ShowServerIpInfo !== false,
+        ShowStreamUnlock: mergedThemeSettings.ShowStreamUnlock !== false,
+        IpMetaApiBase: typeof mergedThemeSettings.IpMetaApiBase === "string" ? mergedThemeSettings.IpMetaApiBase : "/ip-meta",
+        UnlockProbeApiBase: typeof mergedThemeSettings.UnlockProbeApiBase === "string" ? mergedThemeSettings.UnlockProbeApiBase : "/unlock-probe",
+        StreamUnlockShowIPv6: mergedThemeSettings.StreamUnlockShowIPv6 !== false,
       },
       version: km_version.version || "unknown",
     },

@@ -16,7 +16,7 @@ export class RPC2Client {
   private reconnectTimeout?: NodeJS.Timeout;
   private heartbeatInterval?: NodeJS.Timeout;
   private eventListeners: RPC2EventListeners = {};
- 
+
   private readonly baseUrl: string;
   private readonly options: Required<RPC2ConnectionOptions>;
 
@@ -63,8 +63,8 @@ export class RPC2Client {
    * 建立 WebSocket 连接
    */
   async connect(): Promise<void> {
-    if (this.connectionState === RPC2ConnectionState.CONNECTED || 
-        this.connectionState === RPC2ConnectionState.CONNECTING) {
+    if (this.connectionState === RPC2ConnectionState.CONNECTED ||
+      this.connectionState === RPC2ConnectionState.CONNECTING) {
       return;
     }
 
@@ -220,7 +220,7 @@ export class RPC2Client {
       }
 
       const jsonResponse: JSONRPC2Response<TResult> = await response.json();
-      
+
       if ("error" in jsonResponse) {
         throw new Error(`RPC Error ${jsonResponse.error.code}: ${jsonResponse.error.message}`);
       }
@@ -261,7 +261,7 @@ export class RPC2Client {
       }
 
       const jsonResponse: JSONRPC2BatchResponse = await response.json();
-      
+
       return jsonResponse.map(res => {
         if ("error" in res) {
           throw new Error(`RPC Error ${res.error.code}: ${res.error.message}`);
@@ -285,8 +285,8 @@ export class RPC2Client {
     options: RPC2CallOptions = {}
   ): Promise<TResult> {
     // 如果启用了自动连接，且当前未连接，尝试建立连接（不阻塞使用 HTTP 回退）
-    if (this.options.autoConnect && 
-        this.connectionState === RPC2ConnectionState.DISCONNECTED) {
+    if (this.options.autoConnect &&
+      this.connectionState === RPC2ConnectionState.DISCONNECTED) {
       this.autoConnect();
     }
 
@@ -296,14 +296,9 @@ export class RPC2Client {
     if (this.connectionState === RPC2ConnectionState.CONNECTED) {
       try {
         return await this.callViaWebSocket(method, params, options);
-      } catch (wsErr) {
-        // 回退一次 HTTP
-        try {
-          return await this.callViaHTTP(method, params, options);
-        } catch (httpErr) {
-          // HTTP 也失败，抛出 HTTP 错误（信息更贴近最终失败原因）
-          throw httpErr;
-        }
+      } catch {
+        // 回退一次 HTTP，HTTP 失败时直接抛出最终错误
+        return await this.callViaHTTP(method, params, options);
       }
     }
 
@@ -341,9 +336,9 @@ export class RPC2Client {
       this.setConnectionState(RPC2ConnectionState.DISCONNECTED);
       this.stopHeartbeat(); // 停止心跳包
       this.eventListeners.onDisconnect?.();
-      
-      if (this.options.autoReconnect && 
-          this.reconnectAttempts < this.options.maxReconnectAttempts) {
+
+      if (this.options.autoReconnect &&
+        this.reconnectAttempts < this.options.maxReconnectAttempts) {
         this.attemptReconnect();
       }
     };
@@ -361,7 +356,7 @@ export class RPC2Client {
     if (!pending) return;
 
     this.pendingRequests.delete(data.id);
-    
+
     if (pending.timeout) {
       clearTimeout(pending.timeout);
     }
@@ -407,10 +402,10 @@ export class RPC2Client {
     if (!this.options.enableHeartbeat) {
       return;
     }
-    
+
     // 先清理之前的心跳包定时器
     this.stopHeartbeat();
-    
+
     // 按配置的间隔发送心跳包
     this.heartbeatInterval = setInterval(() => {
       if (this.ws && this.ws.readyState === WebSocket.OPEN) {
@@ -551,7 +546,7 @@ export type JSONRPC2ErrorCodeType = typeof JSONRPC2ErrorCode[keyof typeof JSONRP
  */
 export const RPC2ConnectionState = {
   DISCONNECTED: "disconnected",
-  CONNECTING: "connecting", 
+  CONNECTING: "connecting",
   CONNECTED: "connected",
   RECONNECTING: "reconnecting",
   ERROR: "error",

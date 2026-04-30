@@ -638,13 +638,13 @@ function buildPublicNoteFromNode(server: any, existingPublicNote?: string): stri
     const merged = {
       billingDataMod: endDate
         ? {
-            startDate: existing?.billingDataMod?.startDate || startDate,
-            endDate: existing?.billingDataMod?.endDate || endDate,
-            autoRenewal: existing?.billingDataMod?.autoRenewal || autoRenewal,
-            cycle: existing?.billingDataMod?.cycle || (cycle === "-1" ? "" : cycle),
-            amount: existing?.billingDataMod?.amount || amount,
-            currency: currency || existing?.billingDataMod?.currency || "",
-          }
+          startDate: existing?.billingDataMod?.startDate || startDate,
+          endDate: existing?.billingDataMod?.endDate || endDate,
+          autoRenewal: existing?.billingDataMod?.autoRenewal || autoRenewal,
+          cycle: existing?.billingDataMod?.cycle || (cycle === "-1" ? "" : cycle),
+          amount: existing?.billingDataMod?.amount || amount,
+          currency: currency || existing?.billingDataMod?.currency || "",
+        }
         : null,
       planDataMod: {
         bandwidth: existing?.planDataMod?.bandwidth || "",
@@ -779,43 +779,43 @@ export const komariToNezhaWebsocketResponse = (data: any): NezhaWebsocketRespons
 
     const state = status
       ? {
-          cpu: status.cpu || 0,
-          mem_used: status.ram || 0,
-          swap_used: status.swap || 0,
-          disk_used: status.disk || 0,
-          net_in_transfer: status.net_total_down || 0,
-          net_out_transfer: status.net_total_up || 0,
-          net_in_speed: status.net_in || 0,
-          net_out_speed: status.net_out || 0,
-          uptime: status.uptime || 0,
-          load_1: status.load || 0,
-          load_5: status.load5 || 0,
-          load_15: status.load15 || 0,
-          tcp_conn_count: status.connections || 0,
-          udp_conn_count: status.connections_udp || 0,
-          process_count: status.process || 0,
-          temperatures: status.temp > 0 ? [{ Name: "CPU", Temperature: status.temp }] : [],
-          gpu: server.gpu_name && typeof status.gpu === "number" ? [status.gpu] : [],
-        }
+        cpu: status.cpu || 0,
+        mem_used: status.ram || 0,
+        swap_used: status.swap || 0,
+        disk_used: status.disk || 0,
+        net_in_transfer: status.net_total_down || 0,
+        net_out_transfer: status.net_total_up || 0,
+        net_in_speed: status.net_in || 0,
+        net_out_speed: status.net_out || 0,
+        uptime: status.uptime || 0,
+        load_1: status.load || 0,
+        load_5: status.load5 || 0,
+        load_15: status.load15 || 0,
+        tcp_conn_count: status.connections || 0,
+        udp_conn_count: status.connections_udp || 0,
+        process_count: status.process || 0,
+        temperatures: status.temp > 0 ? [{ Name: "CPU", Temperature: status.temp }] : [],
+        gpu: server.gpu_name && typeof status.gpu === "number" ? [status.gpu] : [],
+      }
       : {
-          cpu: 0,
-          mem_used: 0,
-          swap_used: 0,
-          disk_used: 0,
-          net_in_transfer: 0,
-          net_out_transfer: 0,
-          net_in_speed: 0,
-          net_out_speed: 0,
-          uptime: 0,
-          load_1: 0,
-          load_5: 0,
-          load_15: 0,
-          tcp_conn_count: 0,
-          udp_conn_count: 0,
-          process_count: 0,
-          temperatures: [],
-          gpu: [],
-        }
+        cpu: 0,
+        mem_used: 0,
+        swap_used: 0,
+        disk_used: 0,
+        net_in_transfer: 0,
+        net_out_transfer: 0,
+        net_in_speed: 0,
+        net_out_speed: 0,
+        uptime: 0,
+        load_1: 0,
+        load_5: 0,
+        load_15: 0,
+        tcp_conn_count: 0,
+        udp_conn_count: 0,
+        process_count: 0,
+        temperatures: [],
+        gpu: [],
+      }
 
     return {
       uuid,
@@ -831,6 +831,8 @@ export const komariToNezhaWebsocketResponse = (data: any): NezhaWebsocketRespons
       traffic_limit_type: server.traffic_limit_type || "sum",
       expired_at: server.expired_at || "",
       online: status ? status.online === true : false,
+      ipv4: typeof server.ipv4 === "string" ? server.ipv4 : "",
+      ipv6: typeof server.ipv6 === "string" ? server.ipv6 : "",
       tags: typeof server.tags === "string" ? server.tags : "",
       currency: typeof server.currency === "string" ? server.currency : "",
     }
@@ -891,7 +893,7 @@ export const komariToNezhaWebsocketResponse = (data: any): NezhaWebsocketRespons
   }
 }
 
-let __nodesCache__ : any = null
+let __nodesCache__: any = null
 let __nodesCachePromise__: Promise<any> | null = null
 export const getKomariNodes = async () => {
   // 命中缓存，直接返回

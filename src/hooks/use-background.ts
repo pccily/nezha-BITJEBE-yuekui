@@ -8,6 +8,11 @@ declare global {
     ForceCardInline: boolean
     ForceShowMap: boolean
     ForcePeakCutEnabled: boolean
+    ShowServerIpInfo: boolean
+    ShowStreamUnlock: boolean
+    IpMetaApiBase: string
+    UnlockProbeApiBase: string
+    StreamUnlockShowIPv6: boolean
   }
 }
 

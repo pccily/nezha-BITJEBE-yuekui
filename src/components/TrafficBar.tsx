@@ -23,11 +23,16 @@ function calcResetDays(expiredAt: string): string {
 
 function getTypeLabel(type: string): string {
   switch (type) {
-    case "max": return "较大值"
-    case "min": return "较小值"
-    case "up": return "单向(上行)"
-    case "down": return "单向(下行)"
-    default: return "双向"
+    case "max":
+      return "较大值"
+    case "min":
+      return "较小值"
+    case "up":
+      return "单向(上行)"
+    case "down":
+      return "单向(下行)"
+    default:
+      return "双向"
   }
 }
 
@@ -45,9 +50,8 @@ export default function TrafficBar({ used, limit, expiredAt, limitType }: Traffi
   const showResetDay = win.TrafficBarShowResetDay !== false
   const showBillingMode = win.TrafficBarShowBillingMode !== false
 
-  if (limit <= 0) return null
-
-  const percent = Math.min(100, (used / limit) * 100)
+  const hasLimit = limit > 0
+  const percent = hasLimit ? Math.min(100, (used / limit) * 100) : 0
   const percentStr = percent.toFixed(2)
   const usedFormatted = formatBytes(used)
   const limitFormatted = formatBytes(limit)
@@ -79,19 +83,17 @@ export default function TrafficBar({ used, limit, expiredAt, limitType }: Traffi
     }
   }, [shouldCycle, infoItems.length])
 
+  if (!hasLimit) return null
+
   return (
     <div className="space-y-1.5 w-full">
       <div className="flex items-center justify-between">
         <div className="flex items-baseline gap-1">
-          <span className="text-[10px] font-medium text-neutral-800 dark:text-neutral-200">
-            {usedFormatted}
-          </span>
-          <span className="text-[10px] text-neutral-500 dark:text-neutral-400">
-            / {limitFormatted}
-          </span>
+          <span className="text-[10px] font-medium text-neutral-800 dark:text-neutral-200">{usedFormatted}</span>
+          <span className="text-[10px] text-neutral-500 dark:text-neutral-400">/ {limitFormatted}</span>
         </div>
-        {infoItems.length > 0 && (
-          shouldCycle ? (
+        {infoItems.length > 0 &&
+          (shouldCycle ? (
             <div
               className="text-[10px] font-medium text-neutral-600 dark:text-neutral-300 transition-opacity duration-500"
               style={{ opacity: fading ? 0 : 1 }}
@@ -99,11 +101,8 @@ export default function TrafficBar({ used, limit, expiredAt, limitType }: Traffi
               {infoItems[infoIndex % infoItems.length]}
             </div>
           ) : (
-            <span className="text-[10px] font-medium text-neutral-600 dark:text-neutral-300">
-              {infoItems[0]}
-            </span>
-          )
-        )}
+            <span className="text-[10px] font-medium text-neutral-600 dark:text-neutral-300">{infoItems[0]}</span>
+          ))}
       </div>
       <div className="relative h-1.5 w-full">
         <div className="absolute inset-0 bg-neutral-100 dark:bg-neutral-800 rounded-full" />

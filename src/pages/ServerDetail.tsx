@@ -1,5 +1,6 @@
 import { NetworkChart } from "@/components/NetworkChart"
 import ServerDetailChart from "@/components/ServerDetailChart"
+import ServerDetailIP from "@/components/ServerDetailIP"
 import ServerDetailOverview from "@/components/ServerDetailOverview"
 import TabSwitch from "@/components/TabSwitch"
 import { Separator } from "@/components/ui/separator"
@@ -13,7 +14,8 @@ export default function ServerDetail() {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" })
   }, [])
 
-  const tabs = ["Detail", "Network"]
+  const showServerIpInfo = window.ShowServerIpInfo !== false
+  const tabs = showServerIpInfo ? ["Detail", "Network", "IP"] : ["Detail", "Network"]
   const [currentTab, setCurrentTab] = useState(tabs[0])
 
   const { id: server_id } = useParams()
@@ -39,6 +41,11 @@ export default function ServerDetail() {
       <div style={{ display: currentTab === tabs[1] ? "block" : "none" }}>
         <NetworkChart server_id={Number(server_id)} show={currentTab === tabs[1]} />
       </div>
+      {showServerIpInfo && (
+        <div style={{ display: currentTab === "IP" ? "block" : "none" }}>
+          <ServerDetailIP server_id={server_id} />
+        </div>
+      )}
     </div>
   )
 }
