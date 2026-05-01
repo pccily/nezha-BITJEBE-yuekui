@@ -409,7 +409,7 @@ export const fetchSetting = async (): Promise<SettingResponse> => {
   const defaultThemeSettings: Record<string, unknown> = {
     ShowServerIpInfo: true,
     ShowStreamUnlock: true,
-    IpMetaApiBase: "/ip-meta",
+    IpMetaApiBase: "/unlock-probe", // IP 元数据接口已集成到 unlock-probe 服务
     UnlockProbeApiBase: "/unlock-probe",
     StreamUnlockShowIPv6: true,
   }
@@ -433,7 +433,7 @@ export const fetchSetting = async (): Promise<SettingResponse> => {
         custom_code: "", // km_public.custom_head 当作为主题时，Komari会自动在Head中插入该代码，留空即可
         ShowServerIpInfo: mergedThemeSettings.ShowServerIpInfo !== false,
         ShowStreamUnlock: mergedThemeSettings.ShowStreamUnlock !== false,
-        IpMetaApiBase: typeof mergedThemeSettings.IpMetaApiBase === "string" ? mergedThemeSettings.IpMetaApiBase : "/ip-meta",
+        IpMetaApiBase: typeof mergedThemeSettings.IpMetaApiBase === "string" ? mergedThemeSettings.IpMetaApiBase : "/unlock-probe",
         UnlockProbeApiBase: typeof mergedThemeSettings.UnlockProbeApiBase === "string" ? mergedThemeSettings.UnlockProbeApiBase : "/unlock-probe",
         StreamUnlockShowIPv6: mergedThemeSettings.StreamUnlockShowIPv6 !== false,
       },
