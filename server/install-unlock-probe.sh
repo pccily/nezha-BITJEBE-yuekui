@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_OWNER="fanchengliu"
-REPO_NAME="komari-next-pro"
-RELEASE_TAG="v26.04.24-pingblocks-fix"
-ASSET_NAME="komari-unlock-probe-v26.04.24.tar.gz"
+REPO_OWNER="pccily"
+REPO_NAME="nezha-BITJEBE-yuekui"
+RELEASE_TAG="1.0.0"
+ASSET_NAME="unlock-probe.tar.gz"
 DOWNLOAD_URL="https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${RELEASE_TAG}/${ASSET_NAME}"
-INSTALL_DIR_DEFAULT="/opt/komari-next-pro-unlock-probe"
+INSTALL_DIR_DEFAULT="/opt/unlock-probe"
 
 log(){ printf '\n== %s ==\n' "$1"; }
 need(){ command -v "$1" >/dev/null 2>&1 || { echo "Missing required command: $1" >&2; exit 1; }; }
