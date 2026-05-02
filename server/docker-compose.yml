@@ -8,6 +8,7 @@ services:
       KOMARI_USER: ${KOMARI_USER:-admin}
       KOMARI_PASS: ${KOMARI_PASS:-change-me}
       PORT: ${UNLOCK_PROBE_PORT:-19116}
+      HOST: ${HOST:-0.0.0.0}
     ports:
       - "${UNLOCK_PROBE_PORT:-19116}:19116"
     volumes:

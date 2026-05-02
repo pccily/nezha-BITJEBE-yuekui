@@ -4,6 +4,8 @@ import http from 'node:http';
 import net from 'node:net';
 import path from 'node:path';
 
+const FETCH_TIMEOUT_MS = Number(process.env.FETCH_TIMEOUT_MS || 10000);
+
 const HOST = process.env.HOST || '127.0.0.1';
 const PORT = Number(process.env.PORT || 19116);
 const CACHE_TTL_MS = Number(process.env.CACHE_TTL_MS || 5 * 24 * 60 * 60 * 1000);
@@ -72,18 +74,30 @@ async function lookupIpMeta(ip) {
     return { ip, family: 'unknown', masked: maskIp(ip), error: 'invalid_ip' };
   }
 
-  // 检查缓存
   const cached = ipMetaCache.get(ip);
-  if (cached && Date.now() - cached.fetched_at < IP_META_CACHE_TTL_MS) {
+  const cachedAt = cached?.fetched_at ? Date.parse(cached.fetched_at) : NaN;
+  if (cached && Number.isFinite(cachedAt) && Date.now() - cachedAt < IP_META_CACHE_TTL_MS) {
     return { ...cached, cached: true };
   }
 
-  try {
-    // 使用 ip-api.com 免费接口（每分钟 45 次限制）
-    const fields = 'status,message,country,countryCode,regionName,city,timezone,isp,org,as,asname,query,proxy,hosting,mobile';
-    const r = await fetch(`http://ip-api.com/json/${encodeURIComponent(ip)}?fields=${fields}`);
-    const d = await r.json();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
+  try {
+    const fields = 'status,message,country,countryCode,regionName,city,timezone,isp,org,as,asname,query,proxy,hosting,mobile';
+    const r = await fetch(`http://ip-api.com/json/${encodeURIComponent(ip)}?fields=${fields}`, {
+      signal: controller.signal,
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'komari-unlock-probe/0.2.0'
+      }
+    });
+
+    if (!r.ok) {
+      throw new Error(`lookup_http_${r.status}`);
+    }
+
+    const d = await r.json();
     if (d.status !== 'success') throw new Error(d.message || 'lookup_failed');
 
     const hosting = !!d.hosting;
@@ -111,17 +125,19 @@ async function lookupIpMeta(ip) {
       cached: false,
     };
 
-    // 存入缓存
     ipMetaCache.set(ip, result);
     return result;
   } catch (e) {
+    const error = e?.name === 'AbortError' ? 'lookup_timeout' : (e?.message || 'lookup_failed');
     return {
       ip,
       family: familyOf(ip),
       masked: maskIp(ip),
-      error: e?.message || 'lookup_failed',
+      error,
       fetched_at: new Date().toISOString(),
     };
+  } finally {
+    clearTimeout(timer);
   }
 }
 
