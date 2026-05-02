@@ -8,7 +8,7 @@ This file provides guidance to agents when working with code in this repository.
 
 ## 包管理与构建
 - 明确优先使用 npm：CI 用 Node 22 + `npm i`，本地不要改用 bun/yarn 更新锁文件；保留 `package-lock.json` 为准。
-- 无测试框架与 test 脚本；变更后用 `npm run lint`。`npm run build` 会执行 TypeScript 类型检查与 Vite 生产构建，默认不要主动执行；仅在用户明确要求构建验证时运行。
+- 无测试框架与 test 脚本；变更后用 `npm run lint`，默认不要主动执行。`npm run build` 会执行 TypeScript 类型检查与 Vite 生产构建，默认不要主动执行；仅在用户明确要求构建验证时运行。
 - 发布包必须包含 `dist/`、`komari-theme.json`、`preview.png`；GitHub Release 会用 tag 去掉前缀 `v` 后回写 `komari-theme.json.version`。
 
 ## 技术栈

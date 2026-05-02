@@ -5,9 +5,10 @@ import { useWebSocketContext } from "@/hooks/use-websocket-context"
 import { fetchLoginUser } from "@/lib/nezha-api"
 import { cn, formatNezhaInfo } from "@/lib/utils"
 import { NezhaServer, NezhaWebsocketResponse } from "@/types/nezha-api"
-import { Play, RefreshCw, ShieldCheck } from "lucide-react"
+import { BadgeInfo, Play, RefreshCw, ShieldCheck } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
 
 type IpMetaRecord = {
   ip: string
@@ -131,9 +132,9 @@ function statusText(status?: string, statusText?: string, t: (key: string) => st
 function InfoRow({ label, value }: { label: string; value?: string | number | boolean | null }) {
   if (value === undefined || value === null || value === "") return null
   return (
-    <div className="flex items-start justify-between gap-3 border-b border-stone-200/70 py-2 text-sm last:border-0 dark:border-stone-800/70">
-      <span className="shrink-0 text-muted-foreground">{label}</span>
-      <span className="break-all text-right font-medium">{String(value)}</span>
+    <div className="flex items-start justify-between gap-3 border-b border-stone-200/70 py-2 text-[13px] last:border-0 dark:border-stone-800/70">
+      <span className="shrink-0 text-[13px] text-muted-foreground">{label}</span>
+      <span className="break-all text-right text-[13px] font-medium text-stone-700 dark:text-stone-300">{String(value)}</span>
     </div>
   )
 }
@@ -143,30 +144,34 @@ function IpMetaCard({ record }: { record: IpMetaRecord }) {
   return (
     <Card className="rounded-xl bg-white/70 dark:bg-stone-900/70">
       <CardHeader className="p-4 pb-2">
-        <CardTitle className="flex flex-wrap items-center gap-2 text-sm">
-          <span>{record.ip}</span>
-          {record.family && <Badge variant="secondary">{record.family}</Badge>}
-          {record.cached && <Badge variant="outline">{t("serverIp.cached")}</Badge>}
+        <CardTitle className="flex items-center justify-between gap-3 text-[13px]">
+          <div className="flex items-center gap-2">
+            {record.family && (
+              <span className="inline-flex rounded-md bg-stone-100 px-2 py-1 text-[13px] font-semibold text-stone-700 dark:bg-stone-800 dark:text-stone-200">
+                {record.family}
+              </span>
+            )}
+          </div>
+          {record.cached && <span className="text-[13px] font-medium text-stone-400 dark:text-stone-500">{t("serverIp.cached")}</span>}
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4 pt-0">
-        {record.error ? <p className="mb-2 text-sm text-red-500">{record.error}</p> : null}
+        {record.error ? <p className="mb-2 text-[13px] text-red-500">{record.error}</p> : null}
         <InfoRow label={t("serverIp.country")} value={[record.country, record.country_code].filter(Boolean).join(" ")} />
         <InfoRow label={t("serverIp.region")} value={[record.region, record.city].filter(Boolean).join(" / ")} />
         <InfoRow label={t("serverIp.asn")} value={record.asn} />
         <InfoRow label={t("serverIp.org")} value={record.org || record.company} />
-        <InfoRow label={t("serverIp.networkType")} value={record.network_type} />
         <InfoRow label={t("serverIp.timezone")} value={record.timezone} />
-        <InfoRow label={t("serverIp.source")} value={record.source} />
-        <InfoRow label={t("serverIp.fetchedAt")} value={formatDateTime(record.fetched_at)} />
-        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
-          <Badge className={cn("justify-center border-0", scoreTone(record.risk_score))}>
+        {/* <InfoRow label={t("serverIp.source")} value={record.source} /> */}
+        {/* <InfoRow label={t("serverIp.fetchedAt")} value={formatDateTime(record.fetched_at)} /> */}
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          <Badge variant="outline" className={cn("justify-center border-0", scoreTone(record.risk_score))}>
             {t("serverIp.riskScore")}: {record.risk_score ?? "--"}
           </Badge>
-          <Badge className={cn("justify-center border-0", scoreTone(record.pollution_score))}>
+          <Badge variant="outline" className={cn("justify-center border-0", scoreTone(record.pollution_score))}>
             {t("serverIp.pollutionScore")}: {record.pollution_score ?? "--"}
           </Badge>
-          <Badge className="justify-center border-0 bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
+          <Badge variant="outline" className="justify-center border-0 bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
             {t("serverIp.confidenceScore")}: {record.confidence_score ?? "--"}
           </Badge>
         </div>
@@ -176,11 +181,9 @@ function IpMetaCard({ record }: { record: IpMetaRecord }) {
   )
 }
 
-function UnlockCards({ data, loading }: { data: UnlockApiResponse | null; loading: boolean }) {
+function UnlockCards({ data }: { data: UnlockApiResponse | null }) {
   const { t } = useTranslation()
   const resultMap = new Map((data?.results || []).map((item) => [item.key, item]))
-
-  if (loading) return <p className="text-sm text-muted-foreground">{t("serverIp.loading")}</p>
 
   return (
     <div className="space-y-3">
@@ -214,7 +217,9 @@ function UnlockCards({ data, loading }: { data: UnlockApiResponse | null; loadin
                 </div>
                 {/* 状态徽章 */}
                 <div className="mt-2.5">
-                  <Badge className={cn("border-0 text-xs", statusTone(item?.status))}>{statusText(item?.status, item?.statusText, t)}</Badge>
+                  <Badge variant="outline" className={cn("border-0 text-xs", statusTone(item?.status))}>
+                    {statusText(item?.status, item?.statusText, t)}
+                  </Badge>
                 </div>
                 {item?.detail && <p className="mt-1.5 break-all text-xs text-stone-400 dark:text-stone-500">{item.detail}</p>}
               </div>
@@ -243,14 +248,12 @@ function UnlockFamilyPanel({
   const [data, setData] = useState<UnlockApiResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [running, setRunning] = useState(false)
-  const [error, setError] = useState("")
   const unlockBase = readThemeString("UnlockProbeApiBase", "/unlock-probe")
 
   const loadLatest = () => {
     if (!uuid || !enabled) return
     const controller = new AbortController()
     setLoading(true)
-    setError("")
     fetch(`${unlockBase}/unlock/latest?uuid=${encodeURIComponent(uuid)}&family=${family}`, { credentials: "include", signal: controller.signal })
       .then((res) => res.json() as Promise<unknown>)
       .then((json) => {
@@ -260,7 +263,7 @@ function UnlockFamilyPanel({
       })
       .catch((err: unknown) => {
         if (err instanceof DOMException && err.name === "AbortError") return
-        setError(err instanceof Error ? err.message : t("serverIp.unlockUnavailable"))
+        toast.error(err instanceof Error ? err.message : t("serverIp.unlockUnavailable"))
       })
       .finally(() => setLoading(false))
     return () => controller.abort()
@@ -271,7 +274,6 @@ function UnlockFamilyPanel({
   const runCheck = () => {
     if (!uuid || !enabled || !online) return
     setRunning(true)
-    setError("")
     fetch(`${unlockBase}/unlock/run`, {
       method: "POST",
       credentials: "include",
@@ -284,32 +286,42 @@ function UnlockFamilyPanel({
           throw new Error(json && typeof json === "object" && "error" in json ? String(json.error) : t("serverIp.unlockRunFailed"))
         setData(json)
       })
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : t("serverIp.unlockRunFailed")))
+      .catch((err: unknown) => toast.error(err instanceof Error ? err.message : t("serverIp.unlockRunFailed")))
       .finally(() => setRunning(false))
   }
 
   return (
     <Card className="rounded-xl bg-white/70 dark:bg-stone-900/70">
       <CardHeader className="flex flex-row items-center justify-between gap-3 p-4 pb-2">
-        <CardTitle className="flex items-center gap-2 text-base">
+        <CardTitle className="flex items-center gap-2 text-base font-normal">
           <ShieldCheck className="size-4" />
-          {title}
+          {title} 解锁
         </CardTitle>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={loadLatest} disabled={loading || running || !enabled}>
-            <RefreshCw className="size-4" />
-            {t("serverIp.refresh")}
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 rounded-full border-stone-200 bg-white px-3 text-[13px] font-normal text-stone-600 shadow-none hover:border-stone-300 hover:bg-stone-50 hover:text-stone-800 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-stone-600 dark:hover:bg-stone-800 dark:hover:text-stone-100"
+            onClick={loadLatest}
+            disabled={loading || running || !enabled}
+          >
+            <RefreshCw className={cn("size-3.5", loading && "animate-spin")} />
+            {loading ? t("serverIp.loading") : t("serverIp.refresh")}
           </Button>
-          <Button size="sm" onClick={runCheck} disabled={loading || running || !enabled || !online}>
-            {running ? <RefreshCw className="size-4 animate-spin" /> : <Play className="size-4" />}
+          <Button
+            size="sm"
+            className="h-8 rounded-full bg-stone-900 px-3 text-[13px] font-normal text-white shadow-none hover:bg-stone-700 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-300"
+            onClick={runCheck}
+            disabled={loading || running || !enabled || !online}
+          >
+            {running ? <RefreshCw className="size-3.5 animate-spin" /> : <Play className="size-3.5" />}
             {running ? t("serverIp.running") : t("serverIp.runCheck")}
           </Button>
         </div>
       </CardHeader>
       <CardContent className="p-4 pt-2">
         {!online && <p className="mb-3 text-sm text-amber-600 dark:text-amber-300">{t("serverIp.offlineRunDisabled")}</p>}
-        {error && <p className="mb-3 text-sm text-red-500">{error}</p>}
-        <UnlockCards data={data} loading={loading} />
+        <UnlockCards data={data} />
       </CardContent>
     </Card>
   )
@@ -428,7 +440,10 @@ export default function ServerDetailIP({ server_id }: { server_id: string }) {
       {ips.length > 0 && (
         <Card className="rounded-xl bg-white/60 dark:bg-stone-900/60">
           <CardHeader className="p-4 pb-2">
-            <CardTitle className="text-base">{t("serverIp.qualityTitle")}</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-base font-normal">
+              <BadgeInfo className="size-4 text-stone-500 dark:text-stone-400" />
+              {t("serverIp.qualityTitle")}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 p-4 pt-2">
             {metaLoading && <p className="text-sm text-muted-foreground">{t("serverIp.loading")}</p>}
@@ -442,7 +457,6 @@ export default function ServerDetailIP({ server_id }: { server_id: string }) {
       )}
       {showStreamUnlock && server.uuid && ips.length > 0 && (
         <section className="space-y-3">
-          <h3 className="text-base font-semibold">{t("serverIp.unlockTitle")}</h3>
           {server.ipv4 && <UnlockFamilyPanel family="4" title="IPv4" uuid={server.uuid} enabled={showStreamUnlock} online={server.online === true} />}
           {server.ipv6 && showIPv6Unlock && (
             <UnlockFamilyPanel family="6" title="IPv6" uuid={server.uuid} enabled={showStreamUnlock} online={server.online === true} />
